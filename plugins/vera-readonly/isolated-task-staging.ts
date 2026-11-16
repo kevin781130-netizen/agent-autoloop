@@ -40,6 +40,11 @@ function samePath(a: string, b: string): boolean {
   if (process.platform === "win32") return a.toLowerCase() === b.toLowerCase();
   return a === b;
 }
+function isWithin(candidate: string, parent: string): boolean {
+  if (samePath(candidate, parent)) return true;
+  const relative = path.relative(parent, candidate);
+  return relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative);
+}
 
 /**
  * Refuses dirty/unpinned or non-root sources; clones committed HEAD only.
@@ -61,6 +66,9 @@ export function stageVeraTask(request: unknown, options: StagingOptions): Staged
   }
 
   const scratch = canonical(options.scratchRoot ?? tmpdir());
+  if (isWithin(scratch, source)) {
+    throw new Error("scratchRoot must be outside the original repository");
+  }
   const stage_directory = mkdtempSync(path.join(scratch, "vera-task-staging-"));
   const snapshot_path = path.join(stage_directory, "checkout");
   try {
