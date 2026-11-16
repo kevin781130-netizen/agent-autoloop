@@ -71,6 +71,14 @@ test("refuses dirty source and does not stage partial changes", () => {
   }
 });
 
+test("refuses scratch directory within the protected repository", () => {
+  assert.throws(
+    () => stageVeraTask(request, { ...options, scratchRoot: repo }),
+    /outside the original repository/,
+  );
+  assert.equal(git("-C", repo, "status", "--porcelain"), "");
+});
+
 test("cannot smuggle shell commands, approvals, paths or apply intent", () => {
   for (const injected of [
     { command: ["git", "push", "--force"] },
